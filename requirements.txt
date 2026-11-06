@@ -1,2 +1,6 @@
+flask
+gunicorn
+ccxt
+python-dotenv
 ccxt>=4.3.0
 python-dotenv>=1.0.0
