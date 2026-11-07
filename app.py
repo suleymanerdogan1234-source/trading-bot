@@ -36,12 +36,10 @@ def start_bot_thread():
 
 start_bot_thread()
 
-# Ana sayfaya tıklandığında hazırladığımız TradingView grafik arayüzünü açar
 @app.route('/')
 def home():
     return render_template('index.html')
 
-# Bot detaylarını JSON olarak görmek istersen /status adresini kullanabilirsin
 @app.route('/status')
 def status():
     return jsonify({
