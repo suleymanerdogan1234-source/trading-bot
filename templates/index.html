@@ -3,68 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Bot Live Chart</title>
+    <title>Trading Bot Canlı Takip Paneli</title>
     <style>
-        body {
-            background-color: #131722;
-            color: #d1d4dc;
-            font-family: -apple-system, BlinkMacSystemFont, Trebuchet MS, Roboto, Ubuntu, sans-serif;
+        /* Sayfa boşluklarını sıfırlayıp ekranın tamamını kaplamasını sağlıyoruz */
+        * {
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .header {
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: #131722;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        .container {
+            width: 100%;
+            height: 100vh; /* Ekranın dikey yüksekliğinin tamamı */
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            background-color: #1e222d;
+            color: white;
+            padding: 10px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            background: #1e222d;
-            padding: 15px 20px;
-            border-radius: 8px;
+            border-bottom: 1px solid #2a2e39;
+            height: 50px;
         }
-        .status-badge {
-            background-color: #0ecb81;
-            color: #000;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-weight: bold;
+        h1 {
+            font-size: 16px;
         }
-        #chart-container {
+        /* TradingView widget alanını ekranın kalan tüm dikey ve yatay boşluğunu dolduracak şekilde ayarlıyoruz */
+        #tradingview-container {
+            flex-grow: 1;
             width: 100%;
-            height: 500px;
-            background: #1e222d;
-            border-radius: 8px;
-            overflow: hidden;
+            height: calc(100vh - 50px);
         }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h2>🚀 Trading Bot Canlı Takip Paneli</h2>
-        <span class="status-badge" id="bot-status">BOT AKTİF</span>
-    </div>
+    <div class="container">
+        <header>
+            <h1>Trading Bot Canlı Takip Paneli</h1>
+            <span id="bot-status" style="color: #00875A; font-weight: bold;">● Bot Çalışıyor</span>
+        </header>
 
-    <!-- Canlı TradingView Grafik Ekranı -->
-    <div id="chart-container">
         <!-- TradingView Widget BEGIN -->
-        <div class="tradingview-widget-container" style="height:100%;width:100%">
-          <div id="tradingview_chart" style="height:calc(100% - 32px);width:100%"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-          <script type="text/javascript">
-          new TradingView.widget({
-            "autosize": true,
-            "symbol": "BINANCE:BTCUSDT",
-            "interval": "15",
-            "timezone": "Europe/Istanbul",
-            "theme": "dark",
-            "style": "1",
-            "locale": "tr",
-            "toolbar_bg": "#f1f3f6",
-            "enable_publishing": false,
-            "allow_symbol_change": true,
-            "container_id": "tradingview_chart"
-          });
-          </script>
+        <div id="tradingview-container">
+            <div class="tradingview-widget-container" style="height:100%;width:100%">
+                <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+                {
+                    "width": "100%",
+                    "height": "100%",
+                    "symbol": "BINANCE:BTCUSDT",
+                    "interval": "15",
+                    "timezone": "Europe/Istanbul",
+                    "theme": "dark",
+                    "style": "1",
+                    "locale": "tr",
+                    "enable_publishing": false,
+                    "calendar": false,
+                    "support_host": "https://www.tradingview.com"
+                }
+                </script>
+            </div>
         </div>
         <!-- TradingView Widget END -->
     </div>
