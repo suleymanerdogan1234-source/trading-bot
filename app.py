@@ -3,7 +3,6 @@ from flask import Flask
 
 app = Flask(__name__)
 
-# CANLI MUM GRAFİKLERİ VE 200 SMA GÖSTERGELİ PANEL
 @app.route('/', methods=['GET'])
 def home():
     return """
@@ -12,65 +11,109 @@ def home():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>DijitalTrade - Canlı Mum ve 200 SMA</title>
+        <title>DijitalTrade - Profesyonel Grafik Terminali</title>
         <style>
+            * {
+                box-sizing: border-box;
+            }
             body {
-                font-family: Arial, sans-serif;
-                background-color: #0f172a;
-                color: #ffffff;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                background-color: #0b0f19;
+                color: #f8fafc;
                 margin: 0;
                 padding: 0;
                 display: flex;
                 flex-direction: column;
                 height: 100vh;
+                overflow: hidden;
             }
             header {
-                background-color: #1e293b;
-                padding: 12px 20px;
+                background-color: #111827;
+                padding: 12px 24px;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                border-bottom: 1px solid #334155;
+                border-bottom: 1px solid #1f2937;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
                 flex-wrap: wrap;
+                gap: 15px;
+                min-height: 65px;
+            }
+            .brand {
+                display: flex;
+                align-items: center;
                 gap: 10px;
             }
-            h1 { color: #38bdf8; font-size: 18px; margin: 0; }
-            .coin-selector {
+            h1 { 
+                color: #38bdf8; 
+                font-size: 17px; 
+                margin: 0; 
+                font-weight: 700;
+                letter-spacing: 0.5px;
+            }
+            .badge {
+                background-color: #065f46;
+                color: #34d399;
+                font-size: 11px;
+                padding: 3px 8px;
+                border-radius: 4px;
+                font-weight: 600;
+            }
+            .search-box {
                 display: flex;
-                gap: 8px;
+                gap: 12px;
+                align-items: center;
                 flex-wrap: wrap;
             }
-            button {
-                background-color: #334155;
+            select {
+                background-color: #1f2937;
                 color: white;
-                border: none;
-                padding: 6px 12px;
-                border-radius: 6px;
-                cursor: pointer;
-                font-weight: bold;
+                border: 1px solid #374151;
+                padding: 7px 14px;
+                border-radius: 8px;
                 font-size: 13px;
+                font-weight: 500;
+                outline: none;
+                cursor: pointer;
+                transition: border-color 0.2s;
             }
-            button:hover, button.active {
-                background-color: #38bdf8;
-                color: #0f172a;
+            select:hover, select:focus {
+                border-color: #38bdf8;
+            }
+            .info-text {
+                font-size: 12px; 
+                color: #9ca3af;
             }
             .chart-container {
                 flex: 1;
                 width: 100%;
-                height: calc(100vh - 60px);
+                height: calc(100vh - 65px);
             }
         </style>
     </head>
     <body>
         <header>
-            <h1>DijitalTrade (Tüm Coinler + SMA 200)</h1>
-            <div class="coin-selector">
-                <button onclick="changeCoin('BINANCE:BTCUSDT', this)" class="active">BTC</button>
-                <button onclick="changeCoin('BINANCE:ETHUSDT', this)">ETH</button>
-                <button onclick="changeCoin('BINANCE:SOLUSDT', this)">SOL</button>
-                <button onclick="changeCoin('BINANCE:AVAXUSDT', this)">AVAX</button>
-                <button onclick="changeCoin('BINANCE:XRPUSDT', this)">XRP</button>
-                <button onclick="changeCoin('BINANCE:DOGEUSDT', this)">DOGE</button>
+            <div class="brand">
+                <h1>DijitalTrade Terminali</h1>
+                <span class="badge">SMA 200 Aktif</span>
+            </div>
+            <div class="search-box">
+                <span class="info-text">Hızlı Seçim:</span>
+                <select id="coinSelect" onchange="changeCoinFromDropdown(this.value)">
+                    <option value="BINANCE:BTCUSDT">Bitcoin (BTC)</option>
+                    <option value="BINANCE:ETHUSDT">Ethereum (ETH)</option>
+                    <option value="BINANCE:SOLUSDT">Solana (SOL)</option>
+                    <option value="BINANCE:AVAXUSDT">Avalanche (AVAX)</option>
+                    <option value="BINANCE:XRPUSDT">Ripple (XRP)</option>
+                    <option value="BINANCE:DOGEUSDT">Dogecoin (DOGE)</option>
+                    <option value="BINANCE:BNBUSDT">Binance Coin (BNB)</option>
+                    <option value="BINANCE:ADAUSDT">Cardano (ADA)</option>
+                    <option value="BINANCE:TRXUSDT">Tron (TRX)</option>
+                    <option value="BINANCE:NEARUSDT">Near Protocol (NEAR)</option>
+                    <option value="BINANCE:LINKUSDT">Chainlink (LINK)</option>
+                    <option value="BINANCE:SUIUSDT">Sui (SUI)</option>
+                </select>
+                <span class="info-text">*(Grafik sol üstünden tüm coinleri aratabilirsin)*</span>
             </div>
         </header>
         
@@ -92,10 +135,10 @@ def home():
                     "theme": "dark",
                     "style": "1",
                     "locale": "tr",
-                    "toolbar_bg": "#1e293b",
+                    "toolbar_bg": "#111827",
                     "enable_publishing": false,
                     "hide_side_toolbar": false,
-                    "allow_symbol_change": true, // Buradan dilediğin tüm coinleri aratabilirsin
+                    "allow_symbol_change": true,
                     "studies": [
                         {
                             "id": "MASimple@tv-basicstudies",
@@ -108,9 +151,7 @@ def home():
                 });
             }
 
-            function changeCoin(symbol, btn) {
-                document.querySelectorAll('.coin-selector button').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
+            function changeCoinFromDropdown(symbol) {
                 initChart(symbol);
             }
 
