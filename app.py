@@ -1,9 +1,16 @@
 import os
-from flask import Flask, request, jsonify
+import time
+from flask import Flask, jsonify
+import ccxt
 
 app = Flask(__name__)
 
-# 1. ANA SAYFA ROTASI (Tarayıcıda açıldığında görünen panel)
+# Borsa Bağlantısı (Herkese açık veri çekmek için API anahtarına gerek yok)
+exchange = ccxt.binance({
+    'enableRateLimit': True,
+})
+
+# 1. ANA SAYFA ROTASI (Canlı Panel)
 @app.route('/', methods=['GET'])
 def home():
     return """
@@ -12,7 +19,7 @@ def home():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>DijitalTrade Bot</title>
+        <title>DijitalTrade Otonom Bot</title>
         <style>
             body {
                 font-family: Arial, sans-serif;
@@ -48,60 +55,71 @@ def home():
     </head>
     <body>
         <div class="card">
-            <h1>DijitalTrade</h1>
-            <p>Al-Sat Sinyal ve Webhook Sunucusu Aktif</p>
-            <div class="coins">Sistem: Tüm Coinler (BTC, ETH, SOL...) Destekleniyor</div>
-            <div class="status">● Canlı Sinyal Modu</div>
+            <h1>DijitalTrade Otonom Bot</h1>
+            <p>Kendi Canlı Mum Analizi ve Sinyal Üretim Motoru Aktif</p>
+            <div class="coins">Analiz Modu: Kendi Mumlarımız (BTC, ETH, SOL...)</div>
+            <div class="status">● Otomatik Analiz Aktif</div>
         </div>
     </body>
     </html>
     """
 
-# 2. AL-SAT SİNYALLERİNİ İŞLEYEN WEBHOOK ROTASI
-@app.route('/webhook', methods=['POST'])
-def webhook_crypto():
+# 2. KENDİ MUMLARIMIZ ÜZERİNDEN ANALİZ YAPAN ROTA (/analiz/ETHUSDT gibi)
+@app.route('/analiz/<symbol>', methods=['GET'])
+def analyze_candles(symbol):
     try:
-        data = request.get_json(force=True)
+        # Parite formatını ayarlayalım (örneğin ETHUSDT -> ETH/USDT)
+        formatted_symbol = symbol.upper()
+        if "/" not in formatted_symbol and formatted_symbol.endswith("USDT"):
+            formatted_symbol = formatted_symbol.replace("USDT", "/USDT")
+
+        # Son 5 adet 1 dakikalık mumu çekiyoruz
+        # OHLCV: [Zaman, Açılış, Yüksek, Düşük, Kapanış, Hacim]
+        candles = exchange.fetch_ohlcv(formatted_symbol, timeframe='1m', limit=5)
         
-        # TradingView veya dış kaynaktan gelen verileri alıyoruz
-        symbol = data.get('symbol', 'UNKNOWN').upper()
-        action = data.get('action', 'NEUTRAL').upper() # BUY veya SELL beklenir
-        price = data.get('price', 0)
-        strategy = data.get('strategy', 'Bilinmeyen Strateji')
+        if not candles:
+            return jsonify({"status": "error", "message": "Mum verisi alınamadı"}), 400
+
+        # Son tamamlanan mum ve güncel fiyat
+        last_candle = candles[-2]  # Kapanmış olan son mum
+        current_candle = candles[-1] # Şu an hareket eden canlı mum
         
-        print("\n" + "="*40)
-        print(f"📩 YENİ WEBHOOK SİNYALİ ALINDI!")
-        print(f"Parite / Coin : {symbol}")
-        print(f"Strateji      : {strategy}")
-        print(f"Güncel Fiyat  : {price}")
-        
-        # Al-Sat sinyal yönüne göre işlemler
-        if action == 'BUY':
-            print(f"🟢 [ALIM - LONG SİNYALİ] {symbol} için alım şartı sağlandı!")
-            # Buraya Binance / borsa alım API kodlarını entegre edebilirsin
-            islem_durumu = "Alım emri işleme alındı"
-            
-        elif action == 'SELL':
-            print(f"🔴 [SATIŞ - SHORT SİNYALİ] {symbol} için satış şartı sağlandı!")
-            # Buraya borsa satış API kodlarını entegre edebilirsin
-            islem_durumu = "Satış emri işleme alındı"
-            
-        else:
-            print(f"⚪ [NÖTR / DİĞER] {symbol} - Tanımsız eylem: {action}")
-            islem_durumu = "Sinyal alındı ancak işlem yapılmadı"
-            
-        print("="*40 + "\n")
-        
+        open_price = last_candle[1]
+        close_price = last_candle[4]
+        current_price = current_candle[4]
+
+        # --- KENDİ STRATEJİMİZ / MUM MANTIĞIMIZ ---
+        # Örnek Kural: Son kapatan mum yeşilse ve fiyat yükseliyorsa AL, kırmızıysa SAT
+        action = "WAIT"
+        reason = "Belirgin bir şart oluşmadı"
+
+        if close_price > open_price:
+            action = "BUY"
+            reason = f"Son mum YEŞİL kapandı ({open_price} -> {close_price})"
+        elif close_price < open_price:
+            action = "SELL"
+            reason = f"Son mum KIRMIZI kapandı ({open_price} -> {close_price})"
+
+        print(f"\n--- OTOMATİK MUM ANALİZİ [{formatted_symbol}] ---")
+        print(f"Güncel Fiyat : {current_price}")
+        print(f"Son Mum      : Açılış={open_price}, Kapanış={close_price}")
+        print(f"Üretilen Karar: {action} ({reason})")
+        print("--------------------------------------------------\n")
+
         return jsonify({
-            "status": "success", 
-            "message": islem_durumu,
-            "symbol": symbol,
-            "action": action,
-            "price": price
+            "status": "success",
+            "symbol": formatted_symbol,
+            "current_price": current_price,
+            "last_candle": {
+                "open": open_price,
+                "close": close_price
+            },
+            "signal": action,
+            "reason": reason
         }), 200
-        
+
     except Exception as e:
-        print("Webhook İşleme Hatası:", str(e))
+        print("Analiz Hatası:", str(e))
         return jsonify({"status": "error", "message": str(e)}), 400
 
 # 3. SAĞLIK KONTROLÜ
