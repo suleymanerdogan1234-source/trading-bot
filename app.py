@@ -11,113 +11,165 @@ def home():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>DijitalTrade - Profesyonel Grafik Terminali</title>
+        <title>DijitalTrade - Sağ Panel Coin Listesi & SMA 200</title>
         <style>
             * {
                 box-sizing: border-box;
             }
-            body {
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-                background-color: #0b0f19;
-                color: #f8fafc;
+            html, body {
                 margin: 0;
                 padding: 0;
-                display: flex;
-                flex-direction: column;
-                height: 100vh;
+                width: 100%;
+                height: 100%;
+                background-color: #0b0f19;
+                color: #f8fafc;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                 overflow: hidden;
             }
-            header {
+            .main-layout {
+                display: flex;
+                width: 100vw;
+                height: 100vh;
+            }
+            .chart-area {
+                flex: 1;
+                height: 100%;
+            }
+            .sidebar {
+                width: 280px;
                 background-color: #111827;
-                padding: 12px 24px;
+                border-left: 1px solid #1f2937;
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+            }
+            .sidebar-header {
+                padding: 14px;
+                border-bottom: 1px solid #1f2937;
+                background-color: #0f172a;
+            }
+            .sidebar-header h2 {
+                font-size: 14px;
+                color: #38bdf8;
+                margin: 0 0 10px 0;
+                font-weight: 700;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                border-bottom: 1px solid #1f2937;
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                flex-wrap: wrap;
-                gap: 15px;
-                min-height: 65px;
-            }
-            .brand {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-            h1 { 
-                color: #38bdf8; 
-                font-size: 17px; 
-                margin: 0; 
-                font-weight: 700;
-                letter-spacing: 0.5px;
             }
             .badge {
                 background-color: #065f46;
                 color: #34d399;
-                font-size: 11px;
-                padding: 3px 8px;
+                font-size: 10px;
+                padding: 2px 6px;
                 border-radius: 4px;
-                font-weight: 600;
             }
-            .search-box {
-                display: flex;
-                gap: 12px;
-                align-items: center;
-                flex-wrap: wrap;
-            }
-            select {
+            .search-input {
+                width: 100%;
                 background-color: #1f2937;
                 color: white;
                 border: 1px solid #374151;
-                padding: 7px 14px;
-                border-radius: 8px;
+                padding: 8px 12px;
+                border-radius: 6px;
                 font-size: 13px;
-                font-weight: 500;
                 outline: none;
-                cursor: pointer;
-                transition: border-color 0.2s;
             }
-            select:hover, select:focus {
+            .search-input:focus {
                 border-color: #38bdf8;
             }
-            .info-text {
-                font-size: 12px; 
-                color: #9ca3af;
-            }
-            .chart-container {
+            .coin-list {
                 flex: 1;
-                width: 100%;
-                height: calc(100vh - 65px);
+                overflow-y: auto;
+                padding: 8px;
+            }
+            .coin-item {
+                padding: 10px 12px;
+                margin-bottom: 4px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 13px;
+                font-weight: 500;
+                color: #cbd5e1;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                transition: background 0.2s, color 0.2s;
+            }
+            .coin-item:hover {
+                background-color: #1f2937;
+                color: #ffffff;
+            }
+            .coin-item.active {
+                background-color: #38bdf8;
+                color: #0f172a;
+                font-weight: 700;
+            }
+            .coin-symbol {
+                font-size: 11px;
+                color: #94a3b8;
+            }
+            .coin-item.active .coin-symbol {
+                color: #0f172a;
+            }
+            /* Kaydırma çubuğu tasarımı */
+            ::-webkit-scrollbar {
+                width: 6px;
+            }
+            ::-webkit-scrollbar-track {
+                background: #111827;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: #374151;
+                border-radius: 3px;
             }
         </style>
     </head>
     <body>
-        <header>
-            <div class="brand">
-                <h1>DijitalTrade Terminali</h1>
-                <span class="badge">SMA 200 Aktif</span>
+        <div class="main-layout">
+            <!-- Sol Taraf: Dev Ekran Mum Grafiği -->
+            <div class="chart-area" id="tradingview_widget"></div>
+
+            <!-- Sağ Taraf: Coin Arama ve Seçim Paneli -->
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <h2>DijitalTrade <span class="badge">SMA 200</span></h2>
+                    <input type="text" id="searchInput" class="search-input" placeholder="Coin ara (Örn: AVAX)..." onkeyup="filterCoins()">
+                </div>
+                <div class="coin-list" id="coinList">
+                    <div class="coin-item active" onclick="changeCoin('BINANCE:BTCUSDT', this)"><span>Bitcoin</span><span class="coin-symbol">BTC</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:ETHUSDT', this)"><span>Ethereum</span><span class="coin-symbol">ETH</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:SOLUSDT', this)"><span>Solana</span><span class="coin-symbol">SOL</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:AVAXUSDT', this)"><span>Avalanche</span><span class="coin-symbol">AVAX</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:XRPUSDT', this)"><span>Ripple</span><span class="coin-symbol">XRP</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:DOGEUSDT', this)"><span>Dogecoin</span><span class="coin-symbol">DOGE</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:BNBUSDT', this)"><span>Binance Coin</span><span class="coin-symbol">BNB</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:ADAUSDT', this)"><span>Cardano</span><span class="coin-symbol">ADA</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:TRXUSDT', this)"><span>Tron</span><span class="coin-symbol">TRX</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:NEARUSDT', this)"><span>Near Protocol</span><span class="coin-symbol">NEAR</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:LINKUSDT', this)"><span>Chainlink</span><span class="coin-symbol">LINK</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:SUIUSDT', this)"><span>Sui</span><span class="coin-symbol">SUI</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:ARBUSDT', this)"><span>Arbitrum</span><span class="coin-symbol">ARB</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:OPUSDT', this)"><span>Optimism</span><span class="coin-symbol">OP</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:POLUSDT', this)"><span>Polygon</span><span class="coin-symbol">POL</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:DOTUSDT', this)"><span>Polkadot</span><span class="coin-symbol">DOT</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:ATOMUSDT', this)"><span>Cosmos</span><span class="coin-symbol">ATOM</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:RENDERUSDT', this)"><span>Render</span><span class="coin-symbol">RENDER</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:INJUSDT', this)"><span>Injective</span><span class="coin-symbol">INJ</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:TIAUSDT', this)"><span>Celestia</span><span class="coin-symbol">TIA</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:SEIUSDT', this)"><span>Sei</span><span class="coin-symbol">SEI</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:PEPEUSDT', this)"><span>Pepe</span><span class="coin-symbol">PEPE</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:SHIBUSDT', this)"><span>Shiba Inu</span><span class="coin-symbol">SHIB</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:WIFUSDT', this)"><span>Dogwifhat</span><span class="coin-symbol">WIF</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:FLOKIUSDT', this)"><span>Floki</span><span class="coin-symbol">FLOKI</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:BONKUSDT', this)"><span>Bonk</span><span class="coin-symbol">BONK</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:FTMUSDT', this)"><span>Fantom</span><span class="coin-symbol">FTM</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:APTUSDT', this)"><span>Aptos</span><span class="coin-symbol">APT</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:FILUSDT', this)"><span>Filecoin</span><span class="coin-symbol">FIL</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:UNIUSDT', this)"><span>Uniswap</span><span class="coin-symbol">UNI</span></div>
+                    <div class="coin-item" onclick="changeCoin('BINANCE:ICPUSDT', this)"><span>Internet Computer</span><span class="coin-symbol">ICP</span></div>
+                </div>
             </div>
-            <div class="search-box">
-                <span class="info-text">Hızlı Seçim:</span>
-                <select id="coinSelect" onchange="changeCoinFromDropdown(this.value)">
-                    <option value="BINANCE:BTCUSDT">Bitcoin (BTC)</option>
-                    <option value="BINANCE:ETHUSDT">Ethereum (ETH)</option>
-                    <option value="BINANCE:SOLUSDT">Solana (SOL)</option>
-                    <option value="BINANCE:AVAXUSDT">Avalanche (AVAX)</option>
-                    <option value="BINANCE:XRPUSDT">Ripple (XRP)</option>
-                    <option value="BINANCE:DOGEUSDT">Dogecoin (DOGE)</option>
-                    <option value="BINANCE:BNBUSDT">Binance Coin (BNB)</option>
-                    <option value="BINANCE:ADAUSDT">Cardano (ADA)</option>
-                    <option value="BINANCE:TRXUSDT">Tron (TRX)</option>
-                    <option value="BINANCE:NEARUSDT">Near Protocol (NEAR)</option>
-                    <option value="BINANCE:LINKUSDT">Chainlink (LINK)</option>
-                    <option value="BINANCE:SUIUSDT">Sui (SUI)</option>
-                </select>
-                <span class="info-text">*(Grafik sol üstünden tüm coinleri aratabilirsin)*</span>
-            </div>
-        </header>
-        
-        <div class="chart-container" id="tradingview_widget"></div>
+        </div>
 
         <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
         <script type="text/javascript">
@@ -151,10 +203,30 @@ def home():
                 });
             }
 
-            function changeCoinFromDropdown(symbol) {
+            function changeCoin(symbol, element) {
+                // Aktif sınıfını değiştir
+                document.querySelectorAll('.coin-item').forEach(el => el.classList.remove('active'));
+                element.classList.add('active');
+                
+                // Grafiği yükle
                 initChart(symbol);
             }
 
+            function filterCoins() {
+                let input = document.getElementById('searchInput').value.toUpperCase();
+                let items = document.getElementsByClassName('coin-item');
+                
+                for (let i = 0; i < items.length; i++) {
+                    let text = items[i].textContent || items[i].innerText;
+                    if (text.toUpperCase().indexOf(input) > -1) {
+                        items[i].style.display = "";
+                    } else {
+                        items[i].style.display = "none";
+                    }
+                }
+            }
+
+            // İlk açılışta Bitcoin ile başlat
             initChart('BINANCE:BTCUSDT');
         </script>
     </body>
